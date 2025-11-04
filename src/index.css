@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom small utilities */
+:root {
+  --bg: #0d1117;
+}
+
+body {
+  background: var(--bg);
+}
+
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
