@@ -1,114 +1,241 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, X, Github, Linkedin, Mail, ExternalLink, ChevronDown, MapPin } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Github, Linkedin, Mail, Menu, X, Database, Code, Users, Briefcase, ChevronDown, Terminal, Zap } from 'lucide-react';
 
 export default function Portfolio() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
-  const [scrolled, setScrolled] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isVisible, setIsVisible] = useState({});
+  const canvasRef = useRef(null);
+
+  // Mouse tracking for parallax effects
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({
+        x: (e.clientX / window.innerWidth - 0.5) * 20,
+        y: (e.clientY / window.innerHeight - 0.5) * 20
+      });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Animated background particles
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = [];
+    const particleCount = 50;
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 2 + 1;
+        this.speedX = Math.random() * 0.5 - 0.25;
+        this.speedY = Math.random() * 0.5 - 0.25;
+      }
+
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        if (this.x > canvas.width) this.x = 0;
+        if (this.x < 0) this.x = canvas.width;
+        if (this.y > canvas.height) this.y = 0;
+        if (this.y < 0) this.y = canvas.height;
+      }
+
+      draw() {
+        ctx.fillStyle = 'rgba(45, 212, 191, 0.5)';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle());
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      particles.forEach(particle => {
+        particle.update();
+        particle.draw();
+      });
+
+      // Draw connections
+      particles.forEach((p1, i) => {
+        particles.slice(i + 1).forEach(p2 => {
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 150) {
+            ctx.strokeStyle = `rgba(45, 212, 191, ${0.2 * (1 - distance / 150)})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        });
+      });
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Intersection Observer for scroll animations
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          setIsVisible(prev => ({
+            ...prev,
+            [entry.target.id]: entry.isIntersecting
+          }));
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    const sections = document.querySelectorAll('section[id]');
+    sections.forEach(section => observer.observe(section));
+
+    return () => sections.forEach(section => observer.unobserve(section));
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-      
       const sections = ['home', 'about', 'skills', 'projects', 'contact'];
-      const current = sections.find(section => {
+      const scrollPosition = window.scrollY + 100;
+
+      for (const section of sections) {
         const element = document.getElementById(section);
         if (element) {
-          const rect = element.getBoundingClientRect();
-          return rect.top <= 100 && rect.bottom >= 100;
+          const { offsetTop, offsetHeight } = element;
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveSection(section);
+            break;
+          }
         }
-        return false;
-      });
-      if (current) setActiveSection(current);
+      }
     };
-    
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const projects = [
-    {
-      title: "School Clubs Management System",
-      description: "A comprehensive web application for managing school clubs, member registrations, events, and activities with an intuitive admin dashboard.",
-      tech: ["JavaScript", "MySQL", "HTML", "CSS"],
-      github: "https://github.com/Mwiberikian"
-    },
-    {
-      title: "Flea Market Mobile Application",
-      description: "Mobile marketplace application enabling users to buy and sell second-hand items locally with real-time chat and location-based search.",
-      tech: ["JavaScript", "Database", "UI/UX"],
-      github: "https://github.com/Mwiberikian"
-    },
-    {
-      title: "Real Estate Management System",
-      description: "Full-featured property management platform with listings, client management, and transaction tracking capabilities.",
-      tech: ["JavaScript", "PostgreSQL", "HTML", "CSS"],
-      github: "https://github.com/Mwiberikian"
-    }
-  ];
-
-  const skills = [
-    { 
-      category: "Frontend Development", 
-      items: ["HTML5", "CSS3", "JavaScript", "Responsive Design", "UI/UX Design"] 
-    },
-    { 
-      category: "Database Management", 
-      items: ["MySQL", "PostgreSQL", "Database Design", "Query Optimization"] 
-    },
-    { 
-      category: "Tools & Soft Skills", 
-      items: ["Git & GitHub", "Problem-Solving", "Teamwork", "Communication", "Leadership"] 
-    }
-  ];
 
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
-      setActiveSection(id);
       setIsMenuOpen(false);
     }
   };
 
+  const skills = [
+    { name: 'HTML, CSS, JavaScript', icon: Code, color: 'from-orange-400 to-red-500' },
+    { name: 'Database Management', icon: Database, color: 'from-blue-400 to-cyan-500' },
+    { name: 'MySQL & PostgreSQL', icon: Database, color: 'from-purple-400 to-pink-500' },
+    { name: 'Git & GitHub', icon: Terminal, color: 'from-green-400 to-emerald-500' },
+    { name: 'UI/UX Design', icon: Briefcase, color: 'from-yellow-400 to-orange-500' },
+    { name: 'Leadership & Teamwork', icon: Users, color: 'from-teal-400 to-cyan-500' }
+  ];
+
+  const projects = [
+    {
+      title: 'School Clubs Management System',
+      description: 'A comprehensive system for managing school clubs, members, and activities with an intuitive interface.',
+      tags: ['Web Development', 'Database', 'UI/UX'],
+      gradient: 'from-purple-500 to-pink-500'
+    },
+    {
+      title: 'Flea Market Mobile Application',
+      description: 'Mobile app connecting buyers and sellers in local flea markets with real-time listings and chat.',
+      tags: ['Mobile', 'Database', 'JavaScript'],
+      gradient: 'from-blue-500 to-cyan-500'
+    },
+    {
+      title: 'Real Estate Management System',
+      description: 'Property management platform with listing management, tenant tracking, and payment processing.',
+      tags: ['Web Development', 'MySQL', 'Full-Stack'],
+      gradient: 'from-green-500 to-teal-500'
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
+    <div className="bg-slate-950 text-gray-100 min-h-screen overflow-x-hidden">
+      {/* Animated background canvas */}
+      <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-0" />
+
       {/* Navigation */}
-      <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-gray-950/95 backdrop-blur-md shadow-lg shadow-teal-500/10' : 'bg-transparent'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="text-2xl font-bold text-teal-400">
-              KMM
+      <nav className="fixed top-0 w-full bg-slate-950/80 backdrop-blur-md border-b border-teal-500/20 z-50 transition-all">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="text-2xl font-bold bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent animate-pulse">
+              KM
             </div>
-            
+
+            {/* Desktop Menu */}
             <div className="hidden md:flex space-x-8">
-              {['home', 'about', 'skills', 'projects', 'contact'].map((item) => (
+              {['home', 'about', 'skills', 'projects', 'contact'].map((section) => (
                 <button
-                  key={item}
-                  onClick={() => scrollToSection(item)}
-                  className={`capitalize transition-colors ${activeSection === item ? 'text-teal-400' : 'text-gray-300 hover:text-teal-400'}`}
+                  key={section}
+                  onClick={() => scrollToSection(section)}
+                  className={`capitalize transition-all duration-300 relative ${
+                    activeSection === section
+                      ? 'text-teal-400 scale-110'
+                      : 'text-gray-300 hover:text-teal-400'
+                  }`}
                 >
-                  {item}
+                  {section}
+                  {activeSection === section && (
+                    <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-teal-400 to-cyan-400 animate-pulse" />
+                  )}
                 </button>
               ))}
             </div>
 
-            <button className="md:hidden text-teal-400" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden text-teal-400 transition-transform hover:scale-110"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
 
+        {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden bg-gray-950/98 backdrop-blur-md border-t border-gray-800">
+          <div className="md:hidden bg-slate-900/95 backdrop-blur-md border-t border-teal-500/20 animate-fade-in">
             <div className="px-4 py-4 space-y-3">
-              {['home', 'about', 'skills', 'projects', 'contact'].map((item) => (
+              {['home', 'about', 'skills', 'projects', 'contact'].map((section) => (
                 <button
-                  key={item}
-                  onClick={() => scrollToSection(item)}
-                  className="block w-full text-left capitalize text-gray-300 hover:text-teal-400 transition-colors py-2"
+                  key={section}
+                  onClick={() => scrollToSection(section)}
+                  className="block w-full text-left capitalize text-gray-300 hover:text-teal-400 transition-all py-2 hover:translate-x-2"
                 >
-                  {item}
+                  {section}
                 </button>
               ))}
             </div>
@@ -117,172 +244,150 @@ export default function Portfolio() {
       </nav>
 
       {/* Hero Section */}
-      <section id="home" className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute w-96 h-96 bg-teal-500/10 rounded-full blur-3xl top-1/4 left-1/4 animate-pulse"></div>
-          <div className="absolute w-96 h-96 bg-teal-400/10 rounded-full blur-3xl bottom-1/4 right-1/4 animate-pulse" style={{animationDelay: '1s'}}></div>
-        </div>
-        
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500/10 border border-teal-500/20 rounded-full mb-6">
-            <MapPin size={16} className="text-teal-400" />
-            <span className="text-sm text-gray-300">Nairobi, Kenya</span>
+      <section id="home" className="min-h-screen flex items-center justify-center px-4 pt-16 relative z-10">
+        <div className="max-w-4xl mx-auto text-center">
+          <div 
+            className="mb-8 transition-transform duration-300"
+            style={{
+              transform: `translate(${mousePosition.x * 0.5}px, ${mousePosition.y * 0.5}px)`
+            }}
+          >
+            <div className="w-32 h-32 mx-auto mb-6 rounded-full bg-gradient-to-br from-teal-400 via-cyan-500 to-blue-600 flex items-center justify-center text-4xl font-bold animate-float shadow-lg shadow-teal-500/50 relative">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-teal-400 to-cyan-600 animate-spin-slow opacity-20 blur-xl"></div>
+              <span className="relative z-10">KM</span>
+            </div>
           </div>
-          
-          <h1 className="text-5xl md:text-7xl font-bold mb-6">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-500 bg-clip-text text-transparent animate-gradient">
             Kian Mwiberi Muchemi
           </h1>
-          <div className="text-2xl md:text-3xl text-teal-400 mb-6 font-semibold">
+          <p className="text-xl md:text-2xl text-gray-400 mb-4 animate-fade-in-up">
             Computer Scientist & Database Enthusiast
-          </div>
-          <p className="text-lg md:text-xl text-gray-400 mb-12 max-w-3xl mx-auto leading-relaxed">
-            I build responsive web applications and design efficient database systems. Passionate about solving real-world problems with technology and continuously improving through hands-on projects and collaboration.
           </p>
-          
-          <div className="flex flex-wrap gap-4 justify-center mb-12">
-            <button
-              onClick={() => scrollToSection('projects')}
-              className="px-8 py-3 bg-teal-500 hover:bg-teal-600 text-gray-950 rounded-lg font-semibold transition-all transform hover:scale-105 shadow-lg shadow-teal-500/30"
-            >
-              View My Work
-            </button>
-            <button
-              onClick={() => scrollToSection('contact')}
-              className="px-8 py-3 border-2 border-teal-500 text-teal-400 hover:bg-teal-500/10 rounded-lg font-semibold transition-all"
-            >
-              Get In Touch
-            </button>
-          </div>
-
-          <div className="flex gap-4 justify-center">
-            <a 
-              href="https://github.com/Mwiberikian?tab=repositories" 
+          <p className="text-lg text-gray-500 mb-8 flex items-center justify-center gap-2 animate-fade-in-up">
+            <Zap className="text-teal-400 animate-pulse" size={20} />
+            Nairobi, Kenya
+          </p>
+          <div className="flex justify-center space-x-6 animate-fade-in-up">
+            <a
+              href="https://github.com/Mwiberikian?tab=repositories"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-3 bg-gray-800 hover:bg-teal-500/20 border border-gray-700 hover:border-teal-500/50 rounded-lg transition-all"
+              className="p-3 bg-slate-800 hover:bg-teal-500/20 rounded-full transition-all hover:scale-125 hover:rotate-12 group relative"
             >
-              <Github size={24} />
+              <Github className="text-teal-400 group-hover:text-teal-300" size={24} />
+              <div className="absolute inset-0 rounded-full bg-teal-500/20 animate-ping opacity-0 group-hover:opacity-100"></div>
             </a>
-            <a 
-              href="https://www.linkedin.com/in/kian-muchemi-03820b382/" 
+            <a
+              href="https://www.linkedin.com/in/kian-muchemi-03820b382/"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-3 bg-gray-800 hover:bg-teal-500/20 border border-gray-700 hover:border-teal-500/50 rounded-lg transition-all"
+              className="p-3 bg-slate-800 hover:bg-teal-500/20 rounded-full transition-all hover:scale-125 hover:rotate-12 group relative"
             >
-              <Linkedin size={24} />
+              <Linkedin className="text-teal-400 group-hover:text-teal-300" size={24} />
+              <div className="absolute inset-0 rounded-full bg-teal-500/20 animate-ping opacity-0 group-hover:opacity-100"></div>
             </a>
-            <a 
+            <a
               href="mailto:muchemikian@gmail.com"
-              className="p-3 bg-gray-800 hover:bg-teal-500/20 border border-gray-700 hover:border-teal-500/50 rounded-lg transition-all"
+              className="p-3 bg-slate-800 hover:bg-teal-500/20 rounded-full transition-all hover:scale-125 hover:rotate-12 group relative"
             >
-              <Mail size={24} />
+              <Mail className="text-teal-400 group-hover:text-teal-300" size={24} />
+              <div className="absolute inset-0 rounded-full bg-teal-500/20 animate-ping opacity-0 group-hover:opacity-100"></div>
             </a>
           </div>
-          
-          <div className="mt-16 animate-bounce">
-            <ChevronDown size={32} className="mx-auto text-teal-400" />
-          </div>
+          <button
+            onClick={() => scrollToSection('about')}
+            className="mt-12 text-teal-400 animate-bounce"
+          >
+            <ChevronDown size={32} />
+          </button>
         </div>
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-24 px-4 bg-gray-900/50">
-        <div className="max-w-6xl mx-auto">
+      <section id="about" className="min-h-screen flex items-center px-4 py-20 relative z-10">
+        <div className={`max-w-4xl mx-auto transition-all duration-1000 ${isVisible.about ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`}>
           <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center">
-            About <span className="text-teal-400">Me</span>
+            About <span className="text-teal-400 animate-pulse">Me</span>
           </h2>
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6 text-lg text-gray-300 leading-relaxed">
-              <p>
-                I'm a Computer Scientist with hands-on experience in web development and database management. My journey in technology is driven by a passion for creating solutions that make a real impact.
-              </p>
-              <p>
-                I specialize in building responsive web applications using HTML, CSS, and JavaScript, combined with robust database systems using MySQL and PostgreSQL. Every project is an opportunity to learn, grow, and push the boundaries of what's possible.
-              </p>
-              <p>
-                I believe in the power of collaboration and continuous improvement. Whether it's through team projects or solo endeavors, I'm always seeking to refine my skills and contribute meaningfully to the tech community.
-              </p>
-            </div>
-            <div className="relative">
-              <div className="aspect-square bg-gradient-to-br from-teal-500/20 to-gray-800/50 rounded-2xl backdrop-blur-sm border border-teal-500/20 flex items-center justify-center p-8">
-                <div className="text-center">
-                  <div className="text-8xl mb-6">💻</div>
-                  <p className="text-2xl font-semibold text-teal-400">Building Digital Solutions</p>
-                  <p className="text-gray-400 mt-2">One Line of Code at a Time</p>
-                </div>
-              </div>
-            </div>
+          <div 
+            className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-8 md:p-12 border border-teal-500/20 hover:border-teal-500/60 transition-all duration-500 hover:shadow-2xl hover:shadow-teal-500/20 relative overflow-hidden group"
+            style={{
+              transform: `perspective(1000px) rotateX(${mousePosition.y * 0.02}deg) rotateY(${mousePosition.x * 0.02}deg)`
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <p className="text-lg text-gray-300 leading-relaxed relative z-10">
+              I'm a Computer Scientist with hands-on experience in web development and database management. 
+              I enjoy building responsive web applications using HTML, CSS, and JavaScript. I'm passionate 
+              about solving real-world problems with technology and continuously improving my skills through 
+              projects and collaboration.
+            </p>
+            <p className="text-lg text-gray-300 leading-relaxed mt-6 relative z-10">
+              My approach combines technical expertise with creative problem-solving, ensuring that every 
+              project I work on is both functional and user-friendly. I thrive in collaborative environments 
+              and am always eager to learn new technologies and methodologies.
+            </p>
           </div>
         </div>
       </section>
 
       {/* Skills Section */}
-      <section id="skills" className="py-24 px-4">
-        <div className="max-w-6xl mx-auto">
+      <section id="skills" className="min-h-screen flex items-center px-4 py-20 relative z-10">
+        <div className={`max-w-6xl mx-auto w-full transition-all duration-1000 ${isVisible.skills ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`}>
           <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center">
-            Skills & <span className="text-teal-400">Expertise</span>
+            My <span className="text-teal-400">Skills</span>
           </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {skills.map((skillGroup, index) => (
-              <div 
-                key={index} 
-                className="bg-gray-900/50 rounded-xl p-8 backdrop-blur-sm border border-gray-800 hover:border-teal-500/50 transition-all duration-300 hover:transform hover:scale-105"
-              >
-                <h3 className="text-2xl font-bold mb-6 text-teal-400">{skillGroup.category}</h3>
-                <ul className="space-y-3">
-                  {skillGroup.items.map((skill, i) => (
-                    <li key={i} className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-teal-400 rounded-full"></div>
-                      <span className="text-gray-300">{skill}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {skills.map((skill, index) => {
+              const Icon = skill.icon;
+              return (
+                <div
+                  key={index}
+                  className="bg-slate-900/50 backdrop-blur-sm rounded-xl p-6 border border-teal-500/20 hover:border-teal-500/60 transition-all duration-500 group hover:scale-105 hover:shadow-2xl hover:shadow-teal-500/20 relative overflow-hidden"
+                  style={{
+                    animationDelay: `${index * 100}ms`
+                  }}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${skill.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
+                  <Icon className="text-teal-400 mb-4 group-hover:scale-125 group-hover:rotate-12 transition-all duration-500 relative z-10" size={32} />
+                  <h3 className="text-xl font-semibold text-gray-200 relative z-10">{skill.name}</h3>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* Projects Section */}
-      <section id="projects" className="py-24 px-4 bg-gray-900/50">
-        <div className="max-w-6xl mx-auto">
+      <section id="projects" className="min-h-screen flex items-center px-4 py-20 relative z-10">
+        <div className={`max-w-6xl mx-auto w-full transition-all duration-1000 ${isVisible.projects ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`}>
           <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center">
             Featured <span className="text-teal-400">Projects</span>
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.map((project, index) => (
-              <div 
-                key={index} 
-                className="group bg-gray-900/80 rounded-xl overflow-hidden border border-gray-800 hover:border-teal-500/50 transition-all duration-300 hover:transform hover:scale-105 hover:shadow-xl hover:shadow-teal-500/20"
+              <div
+                key={index}
+                className="bg-slate-900/50 backdrop-blur-sm rounded-xl p-6 border border-teal-500/20 hover:border-teal-500/60 hover:shadow-2xl hover:shadow-teal-500/20 transition-all duration-500 group hover:scale-105 relative overflow-hidden"
+                style={{
+                  animationDelay: `${index * 150}ms`
+                }}
               >
-                <div className="h-48 bg-gradient-to-br from-teal-500/20 to-gray-800/50 flex items-center justify-center">
-                  <div className="text-6xl">📱</div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold mb-3 text-teal-400 group-hover:text-teal-300 transition-colors">
-                    {project.title}
-                  </h3>
-                  <p className="text-gray-400 mb-4 leading-relaxed">
-                    {project.description}
-                  </p>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {project.tech.map((tech, i) => (
-                      <span 
-                        key={i} 
-                        className="px-3 py-1 bg-teal-500/10 border border-teal-500/30 text-teal-400 rounded-full text-sm"
-                      >
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-                  <a 
-                    href={project.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-teal-400 hover:text-teal-300 transition-colors"
-                  >
-                    View on GitHub <ExternalLink size={16} />
-                  </a>
+                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${project.gradient} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500`}></div>
+                <div className={`absolute inset-0 bg-gradient-to-br ${project.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}></div>
+                <h3 className="text-2xl font-bold mb-4 text-gray-100 group-hover:text-teal-400 transition-colors relative z-10">
+                  {project.title}
+                </h3>
+                <p className="text-gray-400 mb-6 leading-relaxed relative z-10">{project.description}</p>
+                <div className="flex flex-wrap gap-2 relative z-10">
+                  {project.tags.map((tag, tagIndex) => (
+                    <span
+                      key={tagIndex}
+                      className="px-3 py-1 bg-teal-500/10 text-teal-400 rounded-full text-sm border border-teal-500/30 hover:bg-teal-500/20 hover:scale-110 transition-all duration-300"
+                    >
+                      {tag}
+                    </span>
+                  ))}
                 </div>
               </div>
             ))}
@@ -291,84 +396,92 @@ export default function Portfolio() {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="py-24 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Let's <span className="text-teal-400">Connect</span>
+      <section id="contact" className="min-h-screen flex items-center px-4 py-20 relative z-10">
+        <div className={`max-w-4xl mx-auto w-full text-center transition-all duration-1000 ${isVisible.contact ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`}>
+          <h2 className="text-4xl md:text-5xl font-bold mb-12">
+            Get In <span className="text-teal-400">Touch</span>
           </h2>
-          <p className="text-xl text-gray-400 mb-12 leading-relaxed">
-            Have a project in mind or want to collaborate? I'd love to hear from you. Let's build something amazing together.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
-            <a 
+          <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-8 md:p-12 border border-teal-500/20 hover:border-teal-500/60 transition-all duration-500 hover:shadow-2xl hover:shadow-teal-500/20 group relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <p className="text-xl text-gray-300 mb-8 relative z-10">
+              I'm always open to discussing new projects, creative ideas, or opportunities to be part of your vision.
+            </p>
+            <a
               href="mailto:muchemikian@gmail.com"
-              className="px-8 py-4 bg-teal-500 hover:bg-teal-600 text-gray-950 rounded-lg font-semibold transition-all transform hover:scale-105 shadow-lg shadow-teal-500/30 inline-flex items-center justify-center gap-2"
+              className="inline-flex items-center space-x-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-8 py-4 rounded-full font-semibold hover:shadow-lg hover:shadow-teal-500/50 transition-all hover:scale-110 relative z-10 group"
             >
-              <Mail size={20} />
-              muchemikian@gmail.com
+              <Mail size={24} className="group-hover:rotate-12 transition-transform" />
+              <span>muchemikian@gmail.com</span>
             </a>
-          </div>
-
-          <div className="flex gap-6 justify-center">
-            <a 
-              href="https://github.com/Mwiberikian?tab=repositories"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-6 py-3 border-2 border-teal-500/50 text-teal-400 hover:bg-teal-500/10 rounded-lg font-semibold transition-all inline-flex items-center gap-2"
-            >
-              <Github size={20} />
-              GitHub
-            </a>
-            <a 
-              href="https://www.linkedin.com/in/kian-muchemi-03820b382/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-6 py-3 border-2 border-teal-500/50 text-teal-400 hover:bg-teal-500/10 rounded-lg font-semibold transition-all inline-flex items-center gap-2"
-            >
-              <Linkedin size={20} />
-              LinkedIn
-            </a>
+            <div className="flex justify-center space-x-6 mt-12 relative z-10">
+              <a
+                href="https://github.com/Mwiberikian?tab=repositories"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-teal-400 transition-all hover:scale-125 hover:rotate-12"
+              >
+                <Github size={32} />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/kian-muchemi-03820b382/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-teal-400 transition-all hover:scale-125 hover:rotate-12"
+              >
+                <Linkedin size={32} />
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-4 border-t border-gray-800">
-        <div className="max-w-6xl mx-auto text-center text-gray-500">
+      <footer className="bg-slate-900/80 border-t border-teal-500/20 py-8 relative z-10">
+        <div className="max-w-6xl mx-auto px-4 text-center text-gray-400">
           <p>&copy; 2024 Kian Mwiberi Muchemi. All rights reserved.</p>
         </div>
       </footer>
+
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+        @keyframes gradient {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-float {
+          animation: float 3s ease-in-out infinite;
+        }
+        .animate-gradient {
+          background-size: 200% 200%;
+          animation: gradient 3s ease infinite;
+        }
+        .animate-fade-in-up {
+          animation: fade-in-up 1s ease-out;
+        }
+        .animate-fade-in {
+          animation: fade-in-up 0.3s ease-out;
+        }
+        .animate-spin-slow {
+          animation: spin-slow 3s linear infinite;
+        }
+      `}</style>
     </div>
   );
 }
-```
-
----
-
-## 📄 **.gitignore**
-```
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
