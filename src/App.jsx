@@ -153,7 +153,7 @@ export default function Portfolio() {
   };
 
   const skills = [
-    { name: 'HTML, CSS, JavaScript', icon: Code, color: 'from-orange-400 to-red-500' },
+    { name: 'HTML, CSS, JavaScript, React', icon: Code, color: 'from-orange-400 to-red-500' },
     { name: 'Database Management', icon: Database, color: 'from-blue-400 to-cyan-500' },
     { name: 'MySQL & PostgreSQL', icon: Database, color: 'from-purple-400 to-pink-500' },
     { name: 'Git & GitHub', icon: Terminal, color: 'from-green-400 to-emerald-500' },
@@ -171,7 +171,7 @@ export default function Portfolio() {
     {
       title: 'Flea Market Mobile Application',
       description: 'Mobile app connecting buyers and sellers in local flea markets with real-time listings and chat.',
-      tags: ['Mobile', 'Database', 'JavaScript'],
+      tags: ['Mobile', 'Database', 'Kotlin'],
       gradient: 'from-blue-500 to-cyan-500'
     },
     {
