@@ -8,7 +8,7 @@ export const person = {
   email: 'muchemikian@gmail.com',
   phone: '+254 748 111 373',
   github: 'https://github.com/Mwiberikian',
-  linkedin: 'https://www.linkedin.com/in/kian-muchemi-03820b382/',
+  linkedin: 'https://www.linkedin.com/in/kian-muchemi/',
   cv: '/Kian_Mwiberi_CV.pdf',
   intro:
     'I build web applications end to end, from the React screens people use to the Node.js services and PostgreSQL tables behind them. I’m in my final year of Informatics and Computer Science at Strathmore University.',
