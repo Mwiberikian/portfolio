@@ -1,20 +1,22 @@
-# Kian Mwiberi Muchemi — Portfolio (React + Vite + Tailwind)
+# Kian Mwiberi — Portfolio
 
-This is a single-page portfolio website built with React, Tailwind CSS and Vite.
-Theme: Dark with teal accent.
-Contact form uses FormSubmit (form action points to `https://formsubmit.co/muchemikian@gmail.com`).
+Personal portfolio built with React and Vite.
 
-## Quick start
+## Run it locally
 
-1. Extract the zip
-2. Open a terminal in the project folder
-3. Run:
-   ```
-   npm install
-   npm run dev
-   ```
-4. Open the local URL printed by Vite (usually http://localhost:5173)
+```
+npm install
+npm run dev
+```
 
-## Notes
-- Replace `src/assets/profile.svg` with your real profile photo (rename and update the path if needed).
-- Replace placeholder project screenshots in `src/assets/` with your real images.
+Then open the address Vite prints (usually http://localhost:5173).
+
+## Update the content
+
+Every word on the site lives in `src/content.js`: projects, experience, skills and the handover note at the top. Edit that file; the layout in `src/App.jsx` picks the changes up.
+
+To update the CV, replace `public/Kian_Mwiberi_CV.pdf` with the new file under the same name.
+
+## Deploy
+
+`npm run build` writes the site to `dist/`. Vercel and Netlify are both configured to build from source, so `dist/` and `node_modules/` are not committed.
